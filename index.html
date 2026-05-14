@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI 소셜링 체험</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.18);
+    --accent: #7c6dfa;
+    --accent2: #fa6d9a;
+    --accent3: #6dfacc;
+    --text: #f0eff8;
+    --text-muted: #8885a8;
+    --text-dim: #5a5878;
+    --radius: 16px;
+    --radius-lg: 24px;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 배경 효과 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,109,250,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(250,109,154,0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 680px;
+    padding: 40px 24px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 헤더 */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,109,250,0.15);
+    border: 1px solid rgba(124,109,250,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: #b0a8fc;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  h1 span.g1 { color: var(--accent); }
+  h1 span.g2 { color: var(--accent2); }
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* 스텝 인디케이터 */
+  .steps-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 40px;
+  }
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-bright);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--surface);
+    transition: all 0.3s ease;
+  }
+  .step-circle.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 20px rgba(124,109,250,0.4);
+  }
+  .step-circle.done {
+    background: rgba(109,250,204,0.15);
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+  .step-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .step-label.active { color: var(--accent); }
+  .step-line {
+    width: 48px; height: 1.5px;
+    background: var(--border);
+    margin-bottom: 22px;
+    transition: background 0.3s;
+  }
+  .step-line.done { background: rgba(109,250,204,0.4); }
+
+  /* 섹션 카드 */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: var(--border-bright); }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* API 키 입력 */
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 50px 16px 20px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Space Grotesk', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .input-wrap input:focus { border-color: var(--accent); }
+  .input-wrap input::placeholder { color: var(--text-dim); }
+  .input-icon {
+    position: absolute;
+    right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* 테마 선택 */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .theme-card {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .theme-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .theme-card.future::before { background: radial-gradient(circle at top right, rgba(124,109,250,0.15), transparent 70%); }
+  .theme-card.movie::before { background: radial-gradient(circle at top right, rgba(250,109,154,0.15), transparent 70%); }
+  .theme-card:hover { transform: translateY(-2px); border-color: var(--border-bright); }
+  .theme-card:hover::before { opacity: 1; }
+  .theme-card.selected.future { border-color: var(--accent); background: rgba(124,109,250,0.12); }
+  .theme-card.selected.movie { border-color: var(--accent2); background: rgba(250,109,154,0.12); }
+  .theme-card.selected::before { opacity: 1; }
+  .theme-emoji { font-size: 36px; margin-bottom: 12px; display: block; }
+  .theme-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .theme-card.selected.future .theme-name { color: var(--accent); }
+  .theme-card.selected.movie .theme-name { color: var(--accent2); }
+  .theme-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* 세부 옵션 */
+  .sub-options {
+    display: none;
+    margin-top: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+  .sub-options.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .sub-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .option-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chip:hover { border-color: var(--border-bright); color: var(--text); }
+  .chip.selected-future { border-color: var(--accent); background: rgba(124,109,250,0.15); color: var(--accent); }
+  .chip.selected-movie { border-color: var(--accent2); background: rgba(250,109,154,0.15); color: var(--accent2); }
+
+  /* 사진 업로드 */
+  .upload-area {
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-area:hover { border-color: var(--accent); background: rgba(124,109,250,0.05); }
+  .upload-area.has-image { border-style: solid; border-color: var(--accent3); padding: 16px; }
+  .upload-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+  .upload-text { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+  .upload-sub { font-size: 13px; color: var(--text-dim); }
+  .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .preview-img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 12px;
+    display: none;
+  }
+  .preview-img.show { display: block; }
+  .preview-name {
+    font-size: 13px;
+    color: var(--accent3);
+    margin-top: 12px;
+    display: none;
+  }
+  .preview-name.show { display: block; }
+
+  /* 카메라 버튼 */
+  .capture-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .capture-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* 생성 버튼 */
+  .generate-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none;
+    border-radius: var(--radius);
+    padding: 20px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: all 0.2s;
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,109,250,0.35); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* 로딩 */
+  .loading-wrap {
+    display: none;
+    text-align: center;
+    padding: 48px 32px;
+  }
+  .loading-wrap.show { display: block; }
+  .loader-ring {
+    width: 64px; height: 64px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .loading-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* 결과 */
+  .result-wrap {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+  .result-wrap.show { display: block; }
+  .result-img {
+    width: 100%;
+    border-radius: var(--radius);
+    display: block;
+    margin-bottom: 20px;
+  }
+  /* 포스터 캔버스 */
+  #posterCanvas {
+    width: 100%;
+    border-radius: var(--radius);
+    display: block;
+    margin-bottom: 20px;
+  }
+  .result-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .action-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Noto Sans KR', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.primary {
+    background: rgba(124,109,250,0.15);
+    border-color: rgba(124,109,250,0.4);
+    color: var(--accent);
+  }
+
+  /* 에러 */
+  .error-box {
+    display: none;
+    background: rgba(250,100,100,0.1);
+    border: 1px solid rgba(250,100,100,0.3);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #fa8585;
+    margin-top: 16px;
+  }
+  .error-box.show { display: block; }
+
+  /* 하단 */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* 카메라 모달 */
+  .camera-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .camera-modal.show { display: flex; }
+  #videoEl {
+    width: 100%;
+    max-width: 480px;
+    border-radius: var(--radius);
+    background: #000;
+  }
+  .camera-controls {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .cam-btn {
+    background: white;
+    border: none;
+    border-radius: 50%;
+    width: 64px; height: 64px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cam-cancel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 24px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 24px 16px 48px; }
+    .card { padding: 24px 20px; }
+    h1 { font-size: 36px; }
+    .theme-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .theme-card { padding: 16px 10px; }
+    .theme-emoji { font-size: 28px; margin-bottom: 8px; }
+    .theme-name { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      AI 소셜링 체험 부스
+    </div>
+    <h1>당신의 미래를<br><span class="g1">AI</span>가 <span class="g2">그립니다</span></h1>
+    <p class="subtitle">사진 한 장으로 10년 후의 나, 혹은<br>영화 속 주인공이 되어보세요</p>
+  </div>
+
+  <!-- 스텝 바 -->
+  <div class="steps-bar" id="stepsBar">
+    <div class="step-item">
+      <div class="step-circle active" id="s1">1</div>
+      <div class="step-label active">테마 선택</div>
+    </div>
+    <div class="step-line" id="l1"></div>
+    <div class="step-item">
+      <div class="step-circle" id="s2">2</div>
+      <div class="step-label">사진 업로드</div>
+    </div>
+    <div class="step-line" id="l2"></div>
+    <div class="step-item">
+      <div class="step-circle" id="s3">3</div>
+      <div class="step-label">이미지 생성</div>
+    </div>
+  </div>
+
+  <!-- API 키 하드코딩 (여기에 입력) -->
+  <input type="hidden" id="apiKeyInput" value="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" />
+
+  <!-- STEP 1: 테마 선택 -->
+  <div class="card">
+    <div class="card-title">테마 선택</div>
+    <div class="theme-grid">
+      <div class="theme-card future" onclick="selectTheme('future')">
+        <span class="theme-emoji">🚀</span>
+        <div class="theme-name">미래의 나</div>
+        <div class="theme-desc">10년·20년 후<br>성공한 내 모습</div>
+      </div>
+      <div class="theme-card movie" onclick="selectTheme('movie')">
+        <span class="theme-emoji">🎬</span>
+        <div class="theme-name">영화 포스터</div>
+        <div class="theme-desc">내가 주인공인<br>영화 속 세계</div>
+      </div>
+    </div>
+
+    <!-- 미래 세부 옵션 -->
+    <div class="sub-options" id="futureOptions">
+      <div style="height:1px; background:var(--border); margin: 20px 0;"></div>
+      <div class="sub-label">몇 년 후 모습을 볼까요?</div>
+      <div class="option-chips" id="yearChips">
+        <div class="chip" onclick="selectChip(this,'year','10년 후')">10년 후</div>
+        <div class="chip" onclick="selectChip(this,'year','20년 후')">20년 후</div>
+        <div class="chip" onclick="selectChip(this,'year','30년 후')">30년 후</div>
+      </div>
+      <div style="height:16px;"></div>
+      <div class="sub-label">어떤 모습이길 바라나요?</div>
+      <div class="option-chips" id="jobChips">
+        <div class="chip" onclick="selectChip(this,'job','성공한 CEO')">성공한 CEO</div>
+        <div class="chip" onclick="selectChip(this,'job','글로벌 아티스트')">글로벌 아티스트</div>
+        <div class="chip" onclick="selectChip(this,'job','세계적 과학자')">세계적 과학자</div>
+        <div class="chip" onclick="selectChip(this,'job','인기 크리에이터')">인기 크리에이터</div>
+        <div class="chip" onclick="selectChip(this,'job','사회적 기업가')">사회적 기업가</div>
+        <div class="chip" onclick="selectChip(this,'job','럭셔리 여행가')">럭셔리 여행가</div>
+      </div>
+    </div>
+
+    <!-- 영화 세부 옵션 -->
+    <div class="sub-options" id="movieOptions">
+      <div style="height:1px; background:var(--border); margin: 20px 0;"></div>
+      <div class="sub-label">어떤 장르의 영화인가요?</div>
+      <div class="option-chips" id="genreChips">
+        <div class="chip" onclick="selectChip(this,'genre','액션 블록버스터')">액션 블록버스터</div>
+        <div class="chip" onclick="selectChip(this,'genre','SF 우주 서사시')">SF 우주 서사시</div>
+        <div class="chip" onclick="selectChip(this,'genre','판타지 대서사')">판타지 대서사</div>
+        <div class="chip" onclick="selectChip(this,'genre','스릴러 누아르')">스릴러 누아르</div>
+        <div class="chip" onclick="selectChip(this,'genre','로맨틱 코미디')">로맨틱 코미디</div>
+        <div class="chip" onclick="selectChip(this,'genre','히어로물')">히어로물</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: 사진 업로드 -->
+  <div class="card">
+    <div class="card-title">사진 업로드</div>
+    <div class="upload-area" id="uploadArea" onclick="triggerUpload()">
+      <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)" onclick="event.stopPropagation()">
+      <span class="upload-icon">📸</span>
+      <div class="upload-text">사진을 선택하세요</div>
+      <div class="upload-sub">갤러리에서 선택 · JPG, PNG 지원</div>
+      <img class="preview-img" id="previewImg">
+    </div>
+    <div class="preview-name" id="previewName"></div>
+    <button class="capture-btn" onclick="openCamera()">📷 카메라로 바로 찍기</button>
+  </div>
+
+  <!-- STEP 3: 생성 -->
+  <div class="card">
+    <div class="card-title">AI 이미지 생성</div>
+
+    <div class="loading-wrap" id="loadingWrap">
+      <div class="loader-ring"></div>
+      <div class="loading-text" id="loadingText">AI가 이미지를 만들고 있어요</div>
+      <div class="loading-sub">30초~1분 정도 소요될 수 있어요 ✨</div>
+    </div>
+
+    <div class="result-wrap" id="resultWrap">
+      <!-- 숨겨진 원본 img (캔버스 합성용) -->
+      <img id="resultImg" style="display:none;" crossorigin="anonymous">
+      <!-- 포스터 텍스트가 합성된 최종 캔버스 -->
+      <canvas id="posterCanvas"></canvas>
+      <div class="result-actions">
+        <button class="action-btn primary" onclick="downloadImage()">💾 저장하기</button>
+        <button class="action-btn" onclick="resetAll()">🔄 다시 만들기</button>
+      </div>
+    </div>
+
+    <div id="generateSection">
+      <button class="generate-btn" onclick="generate()" id="genBtn">
+        ✨ AI로 이미지 만들기
+      </button>
+      <div class="error-box" id="errorBox"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    AI 소셜링 · powered by OpenAI gpt-image-1
+  </div>
+</div>
+
+<!-- 카메라 모달 -->
+<div class="camera-modal" id="cameraModal">
+  <video id="videoEl" autoplay playsinline></video>
+  <canvas id="snapCanvas" style="display:none;"></canvas>
+  <div class="camera-controls">
+    <button class="cam-btn" onclick="snapPhoto()" title="찍기">📷</button>
+  </div>
+  <button class="cam-cancel" onclick="closeCamera()" style="margin-top:16px;">닫기</button>
+</div>
+
+<script>
+let selectedTheme = null;
+let selectedChips = { year: null, job: null, genre: null };
+let imageBase64 = null;
+let imageBlob = null;
+let stream = null;
+
+function toggleKey() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function selectTheme(t) {
+  selectedTheme = t;
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector('.theme-card.' + t).classList.add('selected');
+  document.getElementById('futureOptions').classList.toggle('show', t === 'future');
+  document.getElementById('movieOptions').classList.toggle('show', t === 'movie');
+  updateSteps();
+}
+
+function selectChip(el, group, val) {
+  const chipClass = selectedTheme === 'future' ? 'selected-future' : 'selected-movie';
+  document.querySelectorAll('#' + group + 'Chips .chip').forEach(c => c.classList.remove('selected-future', 'selected-movie'));
+  el.classList.add(chipClass);
+  selectedChips[group] = val;
+}
+
+function updateSteps() {
+  const s1 = document.getElementById('s1');
+  const s2 = document.getElementById('s2');
+  const l1 = document.getElementById('l1');
+  if (selectedTheme) {
+    s1.classList.add('done'); s1.classList.remove('active'); s1.textContent = '✓';
+    s2.classList.add('active');
+    l1.classList.add('done');
+  }
+}
+
+function triggerUpload() {
+  document.getElementById('fileInput').click();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  processImageFile(file);
+}
+
+function processImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    imageBase64 = ev.target.result.split(',')[1];
+    const uploadArea = document.getElementById('uploadArea');
+    const preview = document.getElementById('previewImg');
+    preview.src = ev.target.result;
+    preview.classList.add('show');
+    uploadArea.classList.add('has-image');
+    document.getElementById('previewName').textContent = '✅ ' + (file.name || '사진 선택됨');
+    document.getElementById('previewName').classList.add('show');
+    document.getElementById('uploadArea').querySelector('.upload-icon').style.display = 'none';
+    document.getElementById('uploadArea').querySelector('.upload-text').style.display = 'none';
+    document.getElementById('uploadArea').querySelector('.upload-sub').style.display = 'none';
+    updateSteps2();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSteps2() {
+  const s2 = document.getElementById('s2');
+  const s3 = document.getElementById('s3');
+  const l2 = document.getElementById('l2');
+  s2.classList.add('done'); s2.classList.remove('active'); s2.textContent = '✓';
+  s3.classList.add('active');
+  l2.classList.add('done');
+}
+
+function openCamera() {
+  const modal = document.getElementById('cameraModal');
+  modal.classList.add('show');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+    .then(s => {
+      stream = s;
+      document.getElementById('videoEl').srcObject = s;
+    })
+    .catch(() => {
+      alert('카메라 접근이 허용되지 않았어요. 사진 업로드를 이용해 주세요.');
+      closeCamera();
+    });
+}
+
+function snapPhoto() {
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    processImageFile(new File([blob], 'camera.jpg', { type: 'image/jpeg' }));
+    closeCamera();
+  }, 'image/jpeg', 0.92);
+}
+
+function closeCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('cameraModal').classList.remove('show');
+}
+
+function buildPrompt() {
+  if (selectedTheme === 'future') {
+    const year = selectedChips.year || '10년 후';
+    const job = selectedChips.job || '성공한 사람';
+    return `Transform this person's photo into a cinematic portrait showing them ${year} in the future as a "${job}".
+Keep their face, ethnicity, and all facial features exactly the same — only change the styling, clothing, background, and age slightly.
+Professional attire matching their role. Stunning environment reflecting success.
+Photorealistic, high detail, beautiful cinematic lighting, magazine cover quality, 8K. No text in image.`;
+  } else {
+    const genre = selectedChips.genre || '액션 블록버스터';
+    const genreMap = {
+      '액션 블록버스터': 'action thriller movie poster style, dramatic urban backdrop, intense expression, explosions behind, dynamic lighting',
+      'SF 우주 서사시':  'sci-fi space opera movie poster style, futuristic suit, neon galaxy background, epic scale',
+      '판타지 대서사':   'epic fantasy movie poster style, magical glowing environment, mystical atmosphere, grand castle behind',
+      '스릴러 누아르':   'noir thriller movie poster style, dark rainy night, neon signs, cigarette smoke, deep shadows',
+      '로맨틱 코미디':   'romantic comedy movie poster style, warm golden hour lighting, soft bokeh, charming smile',
+      '히어로물':        'superhero movie poster style, heroic pose, dramatic sky, city skyline behind, cape flowing',
+    };
+    return `Transform this person's photo into a professional movie poster style portrait.
+Genre: ${genreMap[genre] || 'cinematic blockbuster'}.
+Keep their face, ethnicity, and all facial features exactly the same — only change the styling, costume, and background to match the genre.
+The person is the main character protagonist. Dramatic cinematic lighting, Hollywood blockbuster quality, photorealistic, 8K. No text in image.`;
+  }
+}
+
+async function generate() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { showError('OpenAI API 키를 입력해주세요.'); return; }
+  if (!selectedTheme) { showError('테마를 먼저 선택해주세요.'); return; }
+  if (!imageBase64) { showError('사진을 먼저 업로드해주세요.'); return; }
+
+  hideError();
+  document.getElementById('generateSection').style.display = 'none';
+  document.getElementById('loadingWrap').classList.add('show');
+
+  const loadingTexts = [
+    'AI가 얼굴을 분석하고 있어요 🔍',
+    '미래 모습을 상상하고 있어요 ✨',
+    '이미지를 그리고 있어요 🎨',
+    '마무리 터치를 하고 있어요 💫'
+  ];
+  let li = 0;
+  const ltInterval = setInterval(() => {
+    li = (li + 1) % loadingTexts.length;
+    document.getElementById('loadingText').textContent = loadingTexts[li];
+  }, 3000);
+
+  try {
+    // gpt-image-1 image edit: 사진을 직접 모델에 전달해서 얼굴 유사도 극대화
+    document.getElementById('loadingText').textContent = 'AI가 사진을 분석하고 있어요 🔍';
+
+    const editPrompt = buildPrompt();
+
+    // base64 → Blob → File 변환
+    const byteArr = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+    const imgFile = new File([byteArr], 'photo.jpg', { type: 'image/jpeg' });
+
+    const formData = new FormData();
+    formData.append('model', 'gpt-image-1');
+    formData.append('prompt', editPrompt);
+    formData.append('n', '1');
+    formData.append('size', '1024x1024');
+    formData.append('quality', 'medium');
+    formData.append('image[]', imgFile);
+
+    document.getElementById('loadingText').textContent = '이미지를 그리고 있어요 🎨';
+    const imgRes = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + apiKey },
+      body: formData
+    });
+    const imgData = await imgRes.json();
+    if (imgData.error) throw new Error(imgData.error.message);
+
+    clearInterval(ltInterval);
+    document.getElementById('loadingWrap').classList.remove('show');
+
+    const b64 = imgData.data[0].b64_json;
+    const imgSrc = 'data:image/png;base64,' + b64;
+    const imgEl = document.getElementById('resultImg');
+    imgEl.onload = function() {
+      renderPoster(imgEl);
+    };
+    imgEl.src = imgSrc;
+    document.getElementById('resultWrap').classList.add('show');
+
+  } catch (err) {
+    clearInterval(ltInterval);
+    document.getElementById('loadingWrap').classList.remove('show');
+    document.getElementById('generateSection').style.display = 'block';
+    showError('오류가 발생했어요: ' + err.message);
+  }
+}
+
+async function downloadImage() {
+  const canvas = document.getElementById('posterCanvas');
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'ai-poster-' + Date.now() + '.png';
+  a.click();
+}
+
+/* ── 포스터 텍스트 합성 ── */
+function getPosterContent() {
+  if (selectedTheme === 'future') {
+    const year = selectedChips.year || '10년 후';
+    const job  = selectedChips.job  || '성공한 사람';
+    const yearNum = year.replace('년 후','');
+    const taglines = {
+      '성공한 CEO':     ['내 삶의 CEO는', '나 자신이었다'],
+      '글로벌 아티스트':['세상이 몰랐던', '한 사람의 이야기'],
+      '세계적 과학자':  ['질문이 세상을', '바꿀 수 있다면'],
+      '인기 크리에이터':['평범했던 하루가', '전설이 되다'],
+      '사회적 기업가':  ['세상을 바꾸는 데', '허락은 필요 없다'],
+      '럭셔리 여행가':  ['길 위에서 찾은', '나만의 자유'],
+    };
+    const lines = taglines[job] || ['그 날이', '마침내 왔다'];
+    return {
+      topText:    `${yearNum}년 후, 마침내`,
+      tagline:    lines,
+      title:      job,
+      subTitle:   null,
+      bottomLeft: `출연  김○○   감독  AI`,
+      bottomRight:`${new Date().getFullYear()}년 · AI 소셜링`,
+      accentColor:'#e8c97a',
+      titleStyle: 'future',
+    };
+  } else {
+    const genre = selectedChips.genre || '액션 블록버스터';
+    const taglineMap = {
+      '액션 블록버스터': ['세상은 그를 버렸고', '그는 세상을 이겼다'],
+      'SF 우주 서사시':  ['우주의 끝에서', '새로운 전설이 시작됐다'],
+      '판타지 대서사':   ['예언은 거짓이었다', '하지만 그는 진짜였다'],
+      '스릴러 누아르':   ['모든 것이 의심스럽다', '당신마저도'],
+      '로맨틱 코미디':   ['최악의 만남에서', '시작된 최고의 이야기'],
+      '히어로물':        ['영웅은 태어나는 게 아니라', '선택받는 것이다'],
+    };
+    const titleMap = {
+      '액션 블록버스터': '무법지대',
+      'SF 우주 서사시':  '스타게이트',
+      '판타지 대서사':   '전설의 시작',
+      '스릴러 누아르':   '다크 미러',
+      '로맨틱 코미디':   '그 사람',
+      '히어로물':        '라이징',
+    };
+    const colorMap = {
+      '액션 블록버스터': '#e84040',
+      'SF 우주 서사시':  '#40c8e8',
+      '판타지 대서사':   '#b07cfa',
+      '스릴러 누아르':   '#e8e040',
+      '로맨틱 코미디':   '#fa7caa',
+      '히어로물':        '#e87c40',
+    };
+    const lines = taglineMap[genre] || ['한 사람의', '특별한 이야기'];
+    return {
+      topText:    `${new Date().getFullYear()}년 · ${genre}`,
+      tagline:    lines,
+      title:      titleMap[genre] || genre,
+      subTitle:   null,
+      bottomLeft: `출연  김○○   감독  AI`,
+      bottomRight:`${new Date().getFullYear()}년 여름, 전설이 시작된다!`,
+      accentColor: colorMap[genre] || '#e84040',
+      titleStyle: 'movie',
+    };
+  }
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split('');
+  let line = '';
+  let lines = [];
+  // 한글은 글자 단위로 줄바꿈
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i];
+    if (ctx.measureText(test).width > maxWidth && line !== '') {
+      lines.push(line);
+      line = words[i];
+    } else {
+      line = test;
+    }
+  }
+  lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
+  return lines.length;
+}
+
+function renderPoster(imgEl) {
+  const canvas = document.getElementById('posterCanvas');
+  const W = 1024, H = 1024;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const content = getPosterContent();
+
+  // 1. 원본 이미지 그리기
+  ctx.drawImage(imgEl, 0, 0, W, H);
+
+  // 2. 상단 그라디언트 오버레이
+  const topGrad = ctx.createLinearGradient(0, 0, 0, H * 0.42);
+  topGrad.addColorStop(0, 'rgba(0,0,0,0.78)');
+  topGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, W, H * 0.42);
+
+  // 3. 하단 그라디언트 오버레이
+  const btmGrad = ctx.createLinearGradient(0, H * 0.45, 0, H);
+  btmGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  btmGrad.addColorStop(0.5, 'rgba(0,0,0,0.72)');
+  btmGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
+  ctx.fillStyle = btmGrad;
+  ctx.fillRect(0, H * 0.45, W, H * 0.55);
+
+  const pad = 52;
+
+  // 4. 상단 작은 텍스트
+  ctx.font = '500 26px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.textAlign = 'left';
+  ctx.fillText(content.topText, pad, 68);
+
+  // 5. 상단 태그라인 (두 줄)
+  ctx.font = '300 32px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.textAlign = 'right';
+  content.tagline.forEach((line, i) => {
+    ctx.fillText(line, W - pad, 80 + i * 46);
+  });
+
+  // 6. 하단 메인 타이틀
+  if (content.titleStyle === 'movie') {
+    // 영화 포스터: 굵은 붓글씨 느낌 타이틀
+    ctx.textAlign = 'left';
+    ctx.font = `900 ${title_fontSize(content.title)}px "Noto Sans KR", sans-serif`;
+    // 텍스트 그림자 (깊이감)
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = content.accentColor;
+    ctx.fillText(content.title, pad, H - 110);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  } else {
+    // 미래 모습: 깔끔한 타이틀
+    ctx.textAlign = 'left';
+    ctx.font = `700 ${title_fontSize(content.title)}px "Noto Sans KR", sans-serif`;
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(content.title, pad, H - 110);
+    // 골드 언더라인
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    const tw = ctx.measureText(content.title).width;
+    ctx.fillStyle = content.accentColor;
+    ctx.fillRect(pad, H - 90, Math.min(tw, W - pad * 2), 4);
+  }
+
+  // 7. 하단 크레딧 줄
+  ctx.font = '400 22px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.textAlign = 'left';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 6;
+  ctx.fillText(content.bottomLeft, pad, H - 54);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = content.accentColor;
+  ctx.font = '500 22px "Noto Sans KR", sans-serif';
+  ctx.fillText(content.bottomRight, W - pad, H - 54);
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
+  // 8. 하단 구분선
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, H - 70);
+  ctx.lineTo(W - pad, H - 70);
+  ctx.stroke();
+}
+
+function title_fontSize(text) {
+  if (text.length <= 3) return 110;
+  if (text.length <= 5) return 90;
+  if (text.length <= 7) return 76;
+  return 62;
+}
+
+function resetAll() {
+  selectedTheme = null;
+  selectedChips = { year: null, job: null, genre: null };
+  imageBase64 = null;
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('futureOptions').classList.remove('show');
+  document.getElementById('movieOptions').classList.remove('show');
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-future','selected-movie'));
+  document.getElementById('fileInput').value = '';
+  const preview = document.getElementById('previewImg');
+  preview.src = ''; preview.classList.remove('show');
+  document.getElementById('previewName').classList.remove('show');
+  document.getElementById('uploadArea').classList.remove('has-image');
+  document.getElementById('uploadArea').querySelector('.upload-icon').style.display = '';
+  document.getElementById('uploadArea').querySelector('.upload-text').style.display = '';
+  document.getElementById('uploadArea').querySelector('.upload-sub').style.display = '';
+  document.getElementById('resultWrap').classList.remove('show');
+  document.getElementById('generateSection').style.display = 'block';
+  document.getElementById('s1').classList.remove('done'); document.getElementById('s1').classList.add('active'); document.getElementById('s1').textContent = '1';
+  document.getElementById('s2').classList.remove('done','active'); document.getElementById('s2').textContent = '2';
+  document.getElementById('s3').classList.remove('active'); document.getElementById('s3').textContent = '3';
+  document.getElementById('l1').classList.remove('done');
+  document.getElementById('l2').classList.remove('done');
+  hideError();
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorBox').classList.remove('show');
+}
+</script>
+</body>
+</html>
