@@ -511,6 +511,32 @@
     .theme-emoji { font-size: 28px; margin-bottom: 8px; }
     .theme-name { font-size: 13px; }
   }
+
+  /* 직접 입력창 */
+  .custom-input-wrap {
+    position: relative;
+  }
+  .custom-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .custom-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,109,250,0.15);
+  }
+  .custom-input::placeholder { color: var(--text-dim); }
+  .custom-input.has-value {
+    border-color: var(--accent);
+    background: rgba(124,109,250,0.08);
+  }
 </style>
 </head>
 <body>
@@ -582,6 +608,13 @@
         <div class="chip" onclick="selectChip(this,'job','사회적 기업가')">사회적 기업가</div>
         <div class="chip" onclick="selectChip(this,'job','럭셔리 여행가')">럭셔리 여행가</div>
       </div>
+      <div style="height:14px;"></div>
+      <div class="sub-label">또는 직접 입력해보세요</div>
+      <div class="custom-input-wrap">
+        <input type="text" class="custom-input" id="jobCustomInput"
+          placeholder="예) 유명한 요리사, 베스트셀러 작가..."
+          oninput="handleCustomInput('job', this.value)" />
+      </div>
     </div>
 
     <!-- 영화 세부 옵션 -->
@@ -595,6 +628,13 @@
         <div class="chip" onclick="selectChip(this,'genre','스릴러 누아르')">스릴러 누아르</div>
         <div class="chip" onclick="selectChip(this,'genre','로맨틱 코미디')">로맨틱 코미디</div>
         <div class="chip" onclick="selectChip(this,'genre','히어로물')">히어로물</div>
+      </div>
+      <div style="height:14px;"></div>
+      <div class="sub-label">또는 직접 입력해보세요</div>
+      <div class="custom-input-wrap">
+        <input type="text" class="custom-input" id="genreCustomInput"
+          placeholder="예) 조선시대 무협, 좀비 아포칼립스..."
+          oninput="handleCustomInput('genre', this.value)" />
       </div>
     </div>
   </div>
@@ -671,10 +711,17 @@ function toggleKey() {
 
 function selectTheme(t) {
   selectedTheme = t;
+  selectedChips = {};
   document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
   document.querySelector('.theme-card.' + t).classList.add('selected');
   document.getElementById('futureOptions').classList.toggle('show', t === 'future');
   document.getElementById('movieOptions').classList.toggle('show', t === 'movie');
+  // 칩 및 입력창 초기화
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-future', 'selected-movie'));
+  ['jobCustomInput', 'genreCustomInput'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('has-value'); }
+  });
   updateSteps();
 }
 
@@ -683,6 +730,26 @@ function selectChip(el, group, val) {
   document.querySelectorAll('#' + group + 'Chips .chip').forEach(c => c.classList.remove('selected-future', 'selected-movie'));
   el.classList.add(chipClass);
   selectedChips[group] = val;
+  // 직접 입력창 초기화
+  const inputId = group === 'job' ? 'jobCustomInput' : 'genreCustomInput';
+  const customInput = document.getElementById(inputId);
+  if (customInput) { customInput.value = ''; customInput.classList.remove('has-value'); }
+}
+
+function handleCustomInput(group, value) {
+  // 칩 선택 모두 해제
+  const chipClass = selectedTheme === 'future' ? 'selected-future' : 'selected-movie';
+  document.querySelectorAll('#' + group + 'Chips .chip').forEach(c => c.classList.remove('selected-future', 'selected-movie'));
+  // 입력값 반영
+  const inputId = group === 'job' ? 'jobCustomInput' : 'genreCustomInput';
+  const customInput = document.getElementById(inputId);
+  if (value.trim()) {
+    selectedChips[group] = value.trim();
+    customInput.classList.add('has-value');
+  } else {
+    delete selectedChips[group];
+    customInput.classList.remove('has-value');
+  }
 }
 
 function updateSteps() {
@@ -765,28 +832,32 @@ function closeCamera() {
   document.getElementById('cameraModal').classList.remove('show');
 }
 
-function buildPrompt() {
+function buildPrompt(faceDesc) {
+  const face = faceDesc || 'a Korean person in their 50s';
   if (selectedTheme === 'future') {
     const year = selectedChips.year || '10년 후';
     const job = selectedChips.job || '성공한 사람';
-    return `Transform this person's photo into a cinematic portrait showing them ${year} in the future as a "${job}".
-Keep their face, ethnicity, and all facial features exactly the same — only change the styling, clothing, background, and age slightly.
+    return `A cinematic portrait of a person with these exact features: ${face}.
+Show them ${year} in the future as a "${job}".
+Preserve all facial features, ethnicity, and likeness as accurately as possible.
 Professional attire matching their role. Stunning environment reflecting success.
-Photorealistic, high detail, beautiful cinematic lighting, magazine cover quality, 8K. No text in image.`;
+Photorealistic, high detail, beautiful cinematic lighting, magazine cover quality, 8K.
+Korean or Asian features must be preserved if present. No text in image.`;
   } else {
     const genre = selectedChips.genre || '액션 블록버스터';
     const genreMap = {
-      '액션 블록버스터': 'action thriller movie poster style, dramatic urban backdrop, intense expression, explosions behind, dynamic lighting',
-      'SF 우주 서사시':  'sci-fi space opera movie poster style, futuristic suit, neon galaxy background, epic scale',
-      '판타지 대서사':   'epic fantasy movie poster style, magical glowing environment, mystical atmosphere, grand castle behind',
-      '스릴러 누아르':   'noir thriller movie poster style, dark rainy night, neon signs, cigarette smoke, deep shadows',
-      '로맨틱 코미디':   'romantic comedy movie poster style, warm golden hour lighting, soft bokeh, charming smile',
-      '히어로물':        'superhero movie poster style, heroic pose, dramatic sky, city skyline behind, cape flowing',
+      '액션 블록버스터': 'action thriller, dramatic urban backdrop, intense expression, explosions behind',
+      'SF 우주 서사시':  'sci-fi space opera, futuristic suit, neon galaxy background, epic scale',
+      '판타지 대서사':   'epic fantasy, magical glowing environment, mystical atmosphere, grand castle',
+      '스릴러 누아르':   'noir thriller, dark rainy night, neon signs, cigarette smoke, shadows',
+      '로맨틱 코미디':   'romantic comedy, warm golden hour, soft bokeh, charming smile',
+      '히어로물':        'superhero film, heroic pose, dramatic sky, city skyline, cape flowing',
     };
-    return `Transform this person's photo into a professional movie poster style portrait.
-Genre: ${genreMap[genre] || 'cinematic blockbuster'}.
-Keep their face, ethnicity, and all facial features exactly the same — only change the styling, costume, and background to match the genre.
-The person is the main character protagonist. Dramatic cinematic lighting, Hollywood blockbuster quality, photorealistic, 8K. No text in image.`;
+    return `A professional movie poster style portrait of a person with these exact features: ${face}.
+Genre style: ${genreMap[genre] || 'cinematic blockbuster'}.
+The person is the main character protagonist. Preserve all facial features and ethnicity accurately.
+Dramatic cinematic lighting, Hollywood blockbuster quality, photorealistic, 8K, ultra detailed.
+Korean or Asian features must be preserved if present. No text or letters in image.`;
   }
 }
 
@@ -813,28 +884,43 @@ async function generate() {
   }, 3000);
 
   try {
-    // gpt-image-1 image edit: 사진을 직접 모델에 전달해서 얼굴 유사도 극대화
-    document.getElementById('loadingText').textContent = 'AI가 사진을 분석하고 있어요 🔍';
-
-    const editPrompt = buildPrompt();
-
-    // base64 → Blob → File 변환
-    const byteArr = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
-    const imgFile = new File([byteArr], 'photo.jpg', { type: 'image/jpeg' });
-
-    const formData = new FormData();
-    formData.append('model', 'gpt-image-1');
-    formData.append('prompt', editPrompt);
-    formData.append('n', '1');
-    formData.append('size', '1024x1024');
-    formData.append('quality', 'medium');
-    formData.append('image[]', imgFile);
-
-    document.getElementById('loadingText').textContent = '이미지를 그리고 있어요 🎨';
-    const imgRes = await fetch('https://api.openai.com/v1/images/edits', {
+    // STEP 1: GPT-4o로 얼굴 특징 추출
+    document.getElementById('loadingText').textContent = 'AI가 얼굴을 분석하고 있어요 🔍';
+    const visionRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + apiKey },
-      body: formData
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + imageBase64, detail: 'low' } },
+            { type: 'text', text: 'Describe this person\'s appearance for DALL-E image generation in English only. Include: apparent gender, estimated age range, face shape, eye shape and color, nose shape, lip shape, hairstyle and hair color, skin tone, any notable features. Be specific and detailed. Output only the description, nothing else.' }
+          ]
+        }]
+      })
+    });
+    if (!visionRes.ok) {
+      const ve = await visionRes.json().catch(() => ({}));
+      throw new Error((ve.error && ve.error.message) ? ve.error.message : '얼굴 분석 실패 (' + visionRes.status + ')');
+    }
+    const visionData = await visionRes.json();
+    const faceDesc = visionData.choices[0].message.content.trim();
+
+    // STEP 2: DALL-E 3로 이미지 생성
+    document.getElementById('loadingText').textContent = '이미지를 그리고 있어요 🎨';
+    const dallePrompt = buildPrompt(faceDesc);
+    const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'gpt-image-1',
+        prompt: dallePrompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'medium'
+      })
     });
     const imgData = await imgRes.json();
     if (imgData.error) throw new Error(imgData.error.message);
