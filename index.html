@@ -570,12 +570,27 @@
     </div>
   </div>
 
-  <!-- API 키 하드코딩 (여기에 입력) -->
-  <input type="hidden" id="apiKeyInput" value="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" />
+  <!-- API 키 입력 화면 (최초 1회) -->
+  <div id="apiKeyScreen" class="card" style="display:none;">
+    <div class="card-title">🔑 API 키 입력</div>
+    <p style="font-size:14px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
+      OpenAI API 키를 입력해주세요.<br>브라우저를 닫기 전까지는 다시 입력하지 않아도 돼요.
+    </p>
+    <div style="position:relative;">
+      <input type="password" id="apiKeyInput" placeholder="sk-proj-..."
+        style="width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:14px 48px 14px 16px; color:var(--text); font-size:15px; font-family:'Noto Sans KR',sans-serif; outline:none;"
+        onkeydown="if(event.key==='Enter') saveApiKey()" />
+      <span onclick="toggleKey()" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px;">👁</span>
+    </div>
+    <button onclick="saveApiKey()"
+      style="margin-top:14px; width:100%; padding:16px; background:linear-gradient(135deg,#7c6dfa,#a855f7); border:none; border-radius:12px; color:#fff; font-size:16px; font-family:'Noto Serif KR',serif; cursor:pointer; letter-spacing:0.5px;">
+      ✦ 시작하기
+    </button>
+    <div id="apiKeyError" style="display:none; margin-top:10px; color:#ff8080; font-size:13px; text-align:center;"></div>
+  </div>
 
   <!-- STEP 1: 테마 선택 -->
-  <div class="card">
-    <div class="card-title">테마 선택</div>
+  <div class="card mainContent">
     <div class="theme-grid">
       <div class="theme-card future" onclick="selectTheme('future')">
         <span class="theme-emoji">🚀</span>
@@ -640,7 +655,7 @@
   </div>
 
   <!-- STEP 2: 사진 업로드 -->
-  <div class="card">
+  <div class="card mainContent">
     <div class="card-title">사진 업로드</div>
     <div class="upload-area" id="uploadArea" onclick="triggerUpload()">
       <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)" onclick="event.stopPropagation()">
@@ -654,7 +669,7 @@
   </div>
 
   <!-- STEP 3: 생성 -->
-  <div class="card">
+  <div class="card mainContent">
     <div class="card-title">AI 이미지 생성</div>
 
     <div class="loading-wrap" id="loadingWrap">
@@ -703,6 +718,50 @@ let selectedChips = { year: null, job: null, genre: null };
 let imageBase64 = null;
 let imageBlob = null;
 let stream = null;
+
+// 앱 시작 시 API 키 확인
+window.addEventListener('DOMContentLoaded', function() {
+  const savedKey = sessionStorage.getItem('openai_api_key');
+  if (savedKey) {
+    showMainApp();
+  } else {
+    document.getElementById('apiKeyScreen').style.display = 'block';
+    // 메인 카드들 숨기기
+    hideMainCards(true);
+  }
+});
+
+function hideMainCards(hide) {
+  document.querySelectorAll('.mainContent').forEach(function(el) {
+    el.style.display = hide ? 'none' : '';
+  });
+  const footer = document.querySelector('.footer');
+  if (footer) footer.style.display = hide ? 'none' : '';
+}
+
+function showMainApp() {
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  hideMainCards(false);
+  document.getElementById('generateSection').style.display = 'block';
+}
+
+function saveApiKey() {
+  const input = document.getElementById('apiKeyInput');
+  const key = input.value.trim();
+  const errEl = document.getElementById('apiKeyError');
+  if (!key || !key.startsWith('sk-')) {
+    errEl.textContent = 'sk- 로 시작하는 올바른 API 키를 입력해주세요.';
+    errEl.style.display = 'block';
+    return;
+  }
+  sessionStorage.setItem('openai_api_key', key);
+  errEl.style.display = 'none';
+  showMainApp();
+}
+
+function getApiKey() {
+  return sessionStorage.getItem('openai_api_key') || '';
+}
 
 function toggleKey() {
   const inp = document.getElementById('apiKeyInput');
@@ -862,8 +921,8 @@ Korean or Asian features must be preserved if present. No text or letters in ima
 }
 
 async function generate() {
-  const apiKey = document.getElementById('apiKeyInput').value.trim();
-  if (!apiKey) { showError('OpenAI API 키를 입력해주세요.'); return; }
+  const apiKey = getApiKey();
+  if (!apiKey) { showError('API 키가 없습니다. 페이지를 새로고침해주세요.'); return; }
   if (!selectedTheme) { showError('테마를 먼저 선택해주세요.'); return; }
   if (!imageBase64) { showError('사진을 먼저 업로드해주세요.'); return; }
 
